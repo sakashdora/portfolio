@@ -1,17 +1,73 @@
-# 💫 About Me:
-Hi, I’m S Akash Dora 👋
- 
-🎓 MCA Student | Aspiring Software Developer
-💻 Python | Java | SQL | HTML | CSS | JavaScript
-⚛️ Learning React.js
-🤖 Building AI & Web Applications
-🚀 Always learning, always improving
+# S Akash Dora — Personal Portfolio Website 🚀
 
+A modern, high-performance, and interactive portfolio website showcasing full-stack software engineering projects, technical skills, and career journey. Built with cutting-edge web technologies, dynamic 3D WebGL visuals, and fluid physics-based animations.
 
-## 🌐 Socials:
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://linkedin.com/in/sakashdora) 
+![Portfolio Preview](/public/assets/profile_pic.png)
 
-# 💻 Tech Stack:
-![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white) ![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white) ![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white) ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white) ![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white) ![Plotly](https://img.shields.io/badge/Plotly-%233F4F75.svg?style=for-the-badge&logo=plotly&logoColor=white) ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+---
 
-<!-- Proudly created with GPRM ( https://gprm.itsvg.in ) -->
+## 🌟 Key Features
+
+- **Interactive 3D WebGL Visuals**: Powered by Three.js, React Three Fiber, and Drei featuring dynamic orbital planetary systems, glowing energy trails, and starfields with mouse parallax.
+- **Fluid Micro-Interactions & Motion**: Staggered scroll animations and reveals driven by GSAP ScrollTrigger and Framer Motion.
+- **Interactive Developer Terminal**: Embedded interactive code card triggering a live terminal emulator modal.
+- **Live Tech Stack Marquee**: Continuous liquid ticker showcasing primary full-stack tools, languages, and frameworks.
+- **Full Project Showcases**: Filterable project gallery with live demo links, source code, and key metrics.
+- **Responsive Across All Devices**: Mobile-first architecture with dedicated mobile navigation and desktop pill navigation.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **3D Graphics**: [Three.js](https://threejs.org/) + [@react-three/fiber](https://docs.pmnd.rs/react-three-fiber/) + [@react-three/drei](https://github.com/pmndrs/drei)
+- **Animations**: [GSAP](https://gsap.com/) (ScrollTrigger) + [Framer Motion](https://www.framer.com/motion/) + [Lenis](https://lenis.darkroom.engineering/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm or bun
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/sakashdora/<repository-name>.git
+cd <repository-name>
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 📦 Build for Production
+
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+## 📬 Contact & Connect
+
+- **Portfolio**: [sakashdora.com](https://sakashdora.com) *(or deployment URL)*
+- **GitHub**: [@sakashdora](https://github.com/sakashdora)
+- **LinkedIn**: [S Akash Dora](https://linkedin.com/in/sakashdora)
+- **Email**: [myselfazure@gmail.com](mailto:myselfazure@gmail.com)
