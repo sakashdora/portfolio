@@ -70,4 +70,3 @@ npm run preview
 - **Portfolio**: [sakashdora.com](https://sakashdora.com) *(or deployment URL)*
 - **GitHub**: [@sakashdora](https://github.com/sakashdora)
 - **LinkedIn**: [S Akash Dora](https://linkedin.com/in/sakashdora)
-- **Email**: [myselfazure@gmail.com](mailto:myselfazure@gmail.com)
