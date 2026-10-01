@@ -9,6 +9,7 @@ import { Contact } from './components/ui/Contact';
 import { Footer } from './components/ui/Footer';
 import { SocialSidebar } from './components/ui/SocialSidebar';
 import { CustomCursor } from './components/ui/CustomCursor';
+import { ChatBot } from './components/ui/ChatBot';
 import { Scene } from './components/3d/Scene';
 import { useAnimations } from './lib/animations';
 
@@ -59,6 +60,7 @@ export default function App() {
         </div>
         
         <Footer />
+        <ChatBot />
     </main>
   );
 }
