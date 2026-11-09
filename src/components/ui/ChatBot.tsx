@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bot, Minus, X, Sparkles, ArrowRight, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessageToGroq, type ChatMessage } from '../../lib/chatbot/groqService';
+import MarbleSprite from '../MarbleSprite';
 
 const SUGGESTION_CHIPS = [
   "Tell me about your skills",
@@ -15,7 +16,7 @@ function formatTime(date: Date = new Date()): string {
 }
 
 export const ChatBot = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -274,33 +275,42 @@ export const ChatBot = () => {
         )}
       </AnimatePresence>
 
-      {/* Floating launcher trigger (shown when minimized or closed) */}
+      {/* Floating 3D MarbleSprite launcher trigger (shown when minimized or closed) */}
       <AnimatePresence>
         {(!isOpen || isMinimized) && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
+            initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            exit={{ scale: 0.85, opacity: 0 }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
             onClick={() => {
               setIsOpen(true);
               setIsMinimized(false);
             }}
-            className="group relative flex items-center gap-2.5 bg-[#1677FF] hover:bg-[#102A56] text-white px-4 py-3 rounded-full shadow-[0_8px_30px_rgba(22,119,255,0.4)] hover:shadow-[0_12px_36px_rgba(22,119,255,0.5)] transition-all duration-300 cursor-pointer"
+            className="group relative cursor-pointer p-0 border-0 bg-transparent rounded-full shadow-[0_8px_28px_rgba(22,119,255,0.22),0_2px_8px_rgba(22,119,255,0.12)] hover:shadow-[0_12px_38px_rgba(22,119,255,0.36)] transition-all duration-300 flex items-center justify-center outline-none select-none"
+            style={{ width: 78, height: 78 }}
             aria-label="Open AI Assistant"
           >
-            {/* Glowing pulse ring */}
-            <span className="absolute -inset-1 rounded-full bg-[#1677FF]/30 blur-xs group-hover:bg-[#1677FF]/50 animate-pulse pointer-events-none" />
+            {/* Ambient soft blue aura */}
+            <span className="absolute -inset-1.5 rounded-full bg-[#1677FF]/15 blur-lg group-hover:bg-[#1677FF]/30 transition-all duration-500 pointer-events-none" />
 
-            <div className="relative flex items-center justify-center">
-              <Bot size={20} className="text-white" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#16B98A] ring-2 ring-white" />
+            {/* Pure 3D MarbleSprite - crystal clear glass sphere with transparent background */}
+            <div className="relative w-full h-full rounded-full overflow-hidden bg-transparent flex items-center justify-center pointer-events-none ring-1 ring-[#1677FF]/15">
+              <MarbleSprite
+                follow="page"
+                scale={140}
+                background="#F8FBFF"
+                spriteColor="#1400F6"
+                frost={5}
+                reach={10}
+                lean={10}
+                blink={10}
+                float={15}
+                style={{ width: '100%', height: '100%' }}
+              />
             </div>
-
-            <span className="relative text-xs sm:text-sm font-bold tracking-tight">
-              AI Assistant
-            </span>
           </motion.button>
         )}
       </AnimatePresence>
