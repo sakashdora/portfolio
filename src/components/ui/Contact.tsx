@@ -1,80 +1,22 @@
-import { Send } from 'lucide-react';
-import { SectionTitle } from './SectionTitle';
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useState, type FormEvent } from 'react';
+import { ArrowUpRight, Copy, Check, Mail, MapPin } from 'lucide-react';
+import { profile } from '../../data/profile';
 
 export const Contact = () => {
-  const formRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-
-    gsap.fromTo(form,
-      { y: 50, opacity: 0, scale: 0.95 },
-      {
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        duration: 0.8,
-        ease: "back.out(1.2)",
-        scrollTrigger: {
-          trigger: form,
-          start: "top 80%",
-        }
-      }
-    );
-  }, []);
-
-  return (
-    <section id="contact" className="relative min-h-screen py-16 md:py-32 z-10 flex flex-col justify-center overflow-hidden">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full text-center">
-        <SectionTitle 
-          title="Let's Build Something Great." 
-          subtitle="Available for engineering opportunities." 
-          className="mb-8 md:mb-12"
-        />
-        
-        <div ref={formRef} className="glass-panel p-6 sm:p-8 md:p-12 rounded-3xl max-w-2xl mx-auto relative overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-[#1677FF]/10 rounded-full blur-[80px] pointer-events-none" />
-          
-          <form className="relative z-10 flex flex-col gap-5 sm:gap-6 text-left">
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-[#10254D] mb-1.5 sm:mb-2">Name</label>
-              <input 
-                type="text" 
-                className="w-full px-4 py-3.5 rounded-xl bg-white/50 border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#1677FF]/50 text-base text-[#10254D] placeholder-[#58708F]/50 transition-all shadow-sm focus:shadow-md min-h-[48px]"
-                placeholder="John Doe"
-              />
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-[#10254D] mb-1.5 sm:mb-2">Email</label>
-              <input 
-                type="email" 
-                className="w-full px-4 py-3.5 rounded-xl bg-white/50 border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#1677FF]/50 text-base text-[#10254D] placeholder-[#58708F]/50 transition-all shadow-sm focus:shadow-md min-h-[48px]"
-                placeholder="john@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-[#10254D] mb-1.5 sm:mb-2">Message</label>
-              <textarea 
-                rows={4}
-                className="w-full px-4 py-3.5 rounded-xl bg-white/50 border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#1677FF]/50 text-base text-[#10254D] placeholder-[#58708F]/50 transition-all resize-none shadow-sm focus:shadow-md"
-                placeholder="Tell me about your project..."
-              />
-            </div>
-            <button 
-              type="button"
-              className="mt-2 bg-gradient-to-r from-[#1677FF] to-[#2F8CFF] text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-[0_8px_20px_rgba(22,119,255,0.3)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 w-full min-h-[48px] group"
-            >
-              Send Message <Send size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
-  );
+  const [status, setStatus] = useState('');
+  const [copied, setCopied] = useState(false);
+  async function copyEmail() { try { await navigator.clipboard.writeText(profile.email); setCopied(true); setStatus('Email address copied.'); } catch { setStatus(`Copy this address: ${profile.email}`); } }
+  function prepareEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const name = String(data.get('name') ?? '').trim();
+    const email = String(data.get('email') ?? '').trim();
+    const message = String(data.get('message') ?? '').trim();
+    if (!name || !email || !message) { setStatus('Please add your name, email and a short message.'); return; }
+    const subject = encodeURIComponent(`Portfolio enquiry from ${name}`);
+    const body = encodeURIComponent(`Hi Akash,\n\n${message}\n\n${name}\n${email}`);
+    window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`;
+    setStatus('Your email app can send this draft. If it didn’t open, use the email address alongside.');
+  }
+  return <section id="contact" className="portfolio-section contact-section" aria-labelledby="contact-heading"><div className="studio-section-label"><span>05 / SAY HELLO</span><span>Good things start with a conversation.</span></div><div className="contact-shell"><div className="contact-copy"><span className="availability"><i />Open to opportunities</span><h2 id="contact-heading">Have an idea?<br /><span>Let’s talk.</span></h2><p>A role, a project, or a good conversation about something you’re building. I’d love to hear about it.</p><div className="contact-address"><a href={`mailto:${profile.email}`}>{profile.email}<ArrowUpRight size={20} /></a><button type="button" className="round-control" aria-label="Copy email address" onClick={copyEmail}>{copied ? <Check size={17} /> : <Copy size={17} />}</button></div><span className="contact-location"><MapPin size={15} />{profile.location}</span><div className="contact-social"><a href="https://github.com/sakashdora" target="_blank" rel="noreferrer">GitHub<ArrowUpRight size={14} /></a><a href="https://linkedin.com/in/sakashdora" target="_blank" rel="noreferrer">LinkedIn<ArrowUpRight size={14} /></a></div></div><form className="contact-form" onSubmit={prepareEmail}><div className="widget-heading"><span><Mail size={18} />Leave a note</span></div><label htmlFor="contact-name">Your name</label><input id="contact-name" name="name" autoComplete="name" placeholder="How should I call you?" maxLength={100} required /><label htmlFor="contact-email">Email address</label><input id="contact-email" name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={200} required /><label htmlFor="contact-message">What’s on your mind?</label><textarea id="contact-message" name="message" placeholder="A little about your idea or opportunity…" rows={4} maxLength={2000} required /><button type="submit" className="studio-button dark-button">Open email draft<ArrowUpRight size={17} /></button><p className="contact-form-note">Opens your email app with your message ready to send.</p></form></div><p className="contact-status" role="status">{status}</p></section>;
 };

@@ -6,8 +6,8 @@ import { Download, Home, User, Cpu, Briefcase, Compass, Send } from 'lucide-reac
 const navItems = [
   { name: 'Home', id: 'home', icon: Home },
   { name: 'About', id: 'about', icon: User },
-  { name: 'Skills', id: 'skills', icon: Cpu },
   { name: 'Projects', id: 'projects', icon: Briefcase },
+  { name: 'Skills', id: 'skills', icon: Cpu },
   { name: 'Journey', id: 'journey', icon: Compass },
   { name: 'Contact', id: 'contact', icon: Send },
 ];
@@ -20,12 +20,12 @@ export const Navbar = () => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 30);
 
-      const sectionIds = ['home', 'about', 'skills', 'projects', 'journey', 'contact'];
+      const sectionIds = navItems.map(item => item.id);
       const scrollPosition = window.scrollY + window.innerHeight * 0.35;
 
       for (let i = sectionIds.length - 1; i >= 0; i--) {
         const el = document.getElementById(sectionIds[i]);
-        if (el && el.offsetTop <= scrollPosition) {
+        if (el && el.getBoundingClientRect().top + window.scrollY <= scrollPosition) {
           setActive(navItems[i].name);
           break;
         }

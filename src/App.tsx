@@ -50,13 +50,15 @@ export default function App() {
         <Navbar />
         <SocialSidebar />
         
-        <div className="relative z-10 w-full pb-20">
+        <div className="relative z-10 w-full">
           <Hero />
+          <div className="portfolio-content">
           <About />
-          <Skills />
           <Projects />
+          <Skills />
           <Journey />
           <Contact />
+          </div>
         </div>
         
         <Footer />
