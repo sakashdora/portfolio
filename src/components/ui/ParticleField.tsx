@@ -48,8 +48,8 @@ export const ParticleField = () => {
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]}>
-      <sphereGeometry args={[0.02, 8, 8]} />
-      <meshBasicMaterial color="#65B8FF" transparent opacity={0.3} />
+      <sphereGeometry args={[0.035, 8, 8]} />
+      <meshBasicMaterial color="#0e7c66" transparent opacity={0.45} />
     </instancedMesh>
   );
 };

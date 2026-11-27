@@ -1,48 +1,156 @@
-import { useEffect, useState } from 'react';
-import { ArrowDownRight, ArrowUpRight, BriefcaseBusiness, Code2, Download, GraduationCap, MapPin, Sparkles } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { ArrowUp, ArrowUpRight, BriefcaseBusiness, Clock, Download, GraduationCap, Github, Globe, Layers, Linkedin, Mail, MapPin, Network, Sparkles } from 'lucide-react';
 import { profile } from '../../data/profile';
 import { social } from '../../data/social';
-import { FocusTimer } from '../portfolio/FocusTimer';
 import { MusicPlayer } from '../portfolio/MusicPlayer';
+import { askAssistant } from '../../lib/chat';
 
-function LocalClock() {
+const capabilities = [
+  { icon: Layers, title: 'Interfaces with intention', text: 'React, responsive design and thoughtful interactions that feel right on any screen.' },
+  { icon: Network, title: 'Connected systems', text: 'APIs, databases and the logic behind the experience, built to stay dependable.' },
+  { icon: Sparkles, title: 'Practical intelligence', text: 'AI integrations that make a product genuinely more useful, not just more novel.' },
+];
+
+const socialIcons = { github: Github, linkedin: Linkedin, mail: Mail } as const;
+const contactLinks = social.filter(item => item.icon in socialIcons);
+
+function LocalTime() {
   const [now, setNow] = useState(() => new Date());
-  useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 1000); return () => window.clearInterval(timer); }, []);
-  return <div className="local-clock"><span className="clock-dot" /><div><time dateTime={now.toISOString()}>{now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })}</time><small>Bhubaneswar · IST</small></div></div>;
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 20_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const label = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
+  return (
+    <span className="about-chip">
+      <Clock size={14} aria-hidden="true" />
+      <time dateTime={now.toISOString()}>{label}</time>
+      <span className="about-chip-muted">IST</span>
+    </span>
+  );
+}
+
+const IST_OFFSET_MINUTES = 330;
+
+/** Compares the visitor's local time zone with Akash's (IST). */
+function TimeGap() {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    const diff = -new Date().getTimezoneOffset() - IST_OFFSET_MINUTES;
+    if (diff === 0) { setText('You’re on my time zone'); return; }
+    const hours = Math.floor(Math.abs(diff) / 60);
+    const minutes = Math.abs(diff) % 60;
+    const amount = [hours ? `${hours}h` : '', minutes ? `${minutes}m` : ''].filter(Boolean).join(' ');
+    setText(`You’re ${amount} ${diff > 0 ? 'ahead of' : 'behind'} me`);
+  }, []);
+  if (!text) return null;
+  return <p className="about-gap"><Globe size={14} aria-hidden="true" />{text}</p>;
+}
+
+const questions = ['What do you build?', 'Tell me about Tradevault', 'What are your skills?', 'Are you open to roles?'];
+
+/** Suggested questions and a free-text box that hand off to the AI assistant. */
+function AskCard() {
+  const [value, setValue] = useState('');
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!value.trim()) return;
+    askAssistant(value);
+    setValue('');
+  };
+  return (
+    <article className="about-ask" aria-labelledby="ask-title">
+      <div>
+        <span className="studio-eyebrow">ASK THE AI ASSISTANT</span>
+        <h3 id="ask-title">Curious? Ask away.</h3>
+      </div>
+      <div className="ask-chips">
+        {questions.map(question => <button key={question} type="button" onClick={() => askAssistant(question)}>{question}</button>)}
+      </div>
+      <form className="ask-form" onSubmit={submit}>
+        <input value={value} onChange={event => setValue(event.target.value)} placeholder="Or type your own question…" maxLength={200} aria-label="Ask the AI assistant a question" />
+        <button type="submit" aria-label="Send question" disabled={!value.trim()}><ArrowUp size={16} /></button>
+      </form>
+    </article>
+  );
 }
 
 export const About = () => {
-  const [tab, setTab] = useState<'overview' | 'background'>('overview');
+  const education = profile.education[0];
   return (
-    <section id="about" className="portfolio-section dashboard-section" aria-labelledby="about-title">
+    <section id="about" className="portfolio-section about-section" aria-labelledby="about-title">
       <div className="studio-section-label"><span>01 / BEHIND THE SCREEN</span><span>A little work. A little life.</span></div>
-      <div className="personal-dashboard">
-        <aside className="profile-rail">
-          <a href="#home" className="profile-monogram" aria-label="Back to home">ad<span>.</span></a>
-          <img className="dashboard-portrait" src="/assets/profile_pic.png" alt="S Akash Dora" width="300" height="370" loading="lazy" />
-          <div><h3>{profile.name}</h3><p className="profile-role">Full-stack developer<br />& AI enthusiast</p></div>
-          <div className="profile-location"><MapPin size={14} /><span>{profile.location}</span></div>
-          <span className="availability"><i />Open to opportunities</span>
-          <a className="studio-button profile-resume" href="/S_Akash_Dora_Resume.pdf" download><Download size={15} />My résumé<ArrowUpRight size={14} /></a>
-          <div className="profile-socials">{social.filter(item => item.name !== 'X').map(item => <a key={item.name} href={item.url}>{item.name}<ArrowUpRight size={11} /></a>)}</div>
-          <p className="profile-footnote">Curious by nature.<br />Precise by practice.</p>
-        </aside>
-        <div className="dashboard-main">
-          <div className="dashboard-toolbar"><div className="dashboard-tabs" role="tablist" aria-label="About Akash" onKeyDown={event => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return; event.preventDefault(); const next = event.key === "Home" ? "overview" : event.key === "End" ? "background" : tab === "overview" ? "background" : "overview"; setTab(next); document.getElementById(`${next}-tab`)?.focus(); }}><button type="button" id="overview-tab" role="tab" tabIndex={tab === 'overview' ? 0 : -1} aria-selected={tab === 'overview'} aria-controls="about-overview" onClick={() => setTab('overview')}>Overview</button><button type="button" id="background-tab" role="tab" tabIndex={tab === 'background' ? 0 : -1} aria-selected={tab === 'background'} aria-controls="about-background" onClick={() => setTab('background')}>My background</button></div><LocalClock /></div>
-          <div className="dashboard-intro"><span className="studio-eyebrow">HELLO, I'M AKASH</span><h2 id="about-title">A developer’s mind.<br /><span>A curious soul.</span></h2><p>{profile.summary}</p></div>
-          <div id="about-overview" role="tabpanel" aria-labelledby="overview-tab" hidden={tab !== 'overview'}>
-            <div className="dashboard-overview">
-              <article className="dash-widget work-widget"><div className="widget-heading"><span><Code2 size={16} /> What I bring to the table</span><ArrowDownRight size={17} /></div><div className="capability-line"><span>01</span><div><h3>Interfaces with intention</h3><p>React, responsive design & thoughtful interactions.</p></div></div><div className="capability-line"><span>02</span><div><h3>Connected systems</h3><p>APIs, databases & the logic behind the experience.</p></div></div><div className="capability-line"><span>03</span><div><h3>Practical intelligence</h3><p>AI integrations that make a product more useful.</p></div></div></article>
-              <a className="craft-widget" href="#projects"><div><span className="studio-eyebrow">IDEA → INTERFACE → EXPERIENCE</span><h3>Good software.<br />Human at heart.</h3></div><div className="glass-sculpture" aria-hidden="true"><i /><i /><i /></div><span>See what I’m building <ArrowUpRight size={19} /></span></a>
+
+      <header className="about-head">
+        <div>
+          <span className="about-eyebrow">HELLO, I’M AKASH</span>
+          <h2 id="about-title">A developer’s mind. <em>A curious soul.</em></h2>
+        </div>
+        <p className="about-lede">{profile.summary}</p>
+      </header>
+
+      <div className="about-grid">
+        <article className="about-portrait" aria-label="About S Akash Dora">
+          <div className="about-chips">
+            <span className="about-chip"><i className="chip-dot" aria-hidden="true" />Open to opportunities</span>
+            <LocalTime />
+          </div>
+          <div className="about-avatar">
+            <span className="avatar-orbit" aria-hidden="true" />
+            <div className="avatar-ring">
+              <img src="/assets/profile_pic.webp" alt="S Akash Dora" width="720" height="720" loading="lazy" decoding="async" />
             </div>
           </div>
-          <div id="about-background" role="tabpanel" aria-labelledby="background-tab" hidden={tab !== 'background'} className="dashboard-background">
-            <article className="dash-widget"><div className="widget-heading"><span><GraduationCap size={17} /> Education</span></div>{profile.education.map(item => <div className="background-entry" key={item.title}><small>{item.period}</small><h3>{item.title}</h3><p>{item.organization}</p></div>)}</article>
-            <article className="dash-widget"><div className="widget-heading"><span><BriefcaseBusiness size={17} /> Hands-on experience</span></div><div className="background-entry"><small>{profile.experience.period}</small><h3>{profile.experience.title}</h3><p>{profile.experience.organization}</p><p>{profile.experience.detail}</p></div><a className="inline-link" href="#journey">The full story <ArrowUpRight size={15} /></a></article>
+          <div className="about-id">
+            <h3>{profile.name}</h3>
+            <p className="about-role">Full-stack developer &amp; AI enthusiast</p>
+            <p className="about-place"><MapPin size={14} aria-hidden="true" />{profile.location}</p>
+            <TimeGap />
+            <div className="about-actions">
+              <a className="studio-button dark-button" href="/S_Akash_Dora_Resume.pdf" download><Download size={15} />Résumé</a>
+              <div className="about-socials">
+                {contactLinks.map(item => {
+                  const Icon = socialIcons[item.icon as keyof typeof socialIcons];
+                  return (
+                    <a key={item.name} className="round-control" href={item.url} target={item.url.startsWith('http') ? '_blank' : undefined} rel="noreferrer" aria-label={item.name}><Icon size={17} /></a>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          <div className="dashboard-bottom"><MusicPlayer /><FocusTimer /></div>
-          <div className="dashboard-status"><span><Sparkles size={13} />Building, learning, and finding better ways.</span><a href="/cv.html">More about me <ArrowUpRight size={13} /></a></div>
-        </div>
+        </article>
+
+        <article className="about-card about-bring">
+          <h3 className="about-card-title"><span>What I bring to the table</span><span aria-hidden="true">01</span></h3>
+          <div className="bring-list">
+            {capabilities.map(({ icon: Icon, title, text }) => (
+              <div className="bring-item" key={title}>
+                <span className="bring-icon" aria-hidden="true"><Icon size={20} /></span>
+                <h4>{title}</h4>
+                <p>{text}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <AskCard />
+
+        <article className="about-card about-now">
+          <h3 className="about-card-title"><span>Right now</span><span aria-hidden="true">02</span></h3>
+          <div className="now-list">
+            <div className="now-item">
+              <span className="now-icon" aria-hidden="true"><GraduationCap size={18} /></span>
+              <div><small>{education.period}</small><strong>{education.title}</strong><span>{education.organization}</span></div>
+            </div>
+            <div className="now-item">
+              <span className="now-icon" aria-hidden="true"><BriefcaseBusiness size={18} /></span>
+              <div><small>{profile.experience.period}</small><strong>{profile.experience.title}</strong><span>{profile.experience.organization}</span></div>
+            </div>
+          </div>
+          <a className="inline-link" href="#journey">The full story <ArrowUpRight size={15} /></a>
+        </article>
+
+        <MusicPlayer />
       </div>
     </section>
   );

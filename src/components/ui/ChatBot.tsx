@@ -111,6 +111,27 @@ export const ChatBot = () => {
     }
   };
 
+  // Lets other parts of the page (About, command palette) open the chat with a question.
+  const sendRef = useRef(handleSendMessage);
+  sendRef.current = handleSendMessage;
+  useEffect(() => {
+    const ask = (question: string) => {
+      setIsOpen(true);
+      setIsMinimized(false);
+      window.setTimeout(() => { void sendRef.current(question); }, 250);
+    };
+    const onAsk = (event: Event) => {
+      const question = (event as CustomEvent<string>).detail;
+      delete (window as Window & { __chatbotPending?: string }).__chatbotPending;
+      if (typeof question === 'string' && question.trim()) ask(question);
+    };
+    window.addEventListener('chatbot:ask', onAsk);
+    // A question asked before this (lazy) component finished loading.
+    const pending = (window as Window & { __chatbotPending?: string }).__chatbotPending;
+    if (pending) { delete (window as Window & { __chatbotPending?: string }).__chatbotPending; ask(pending); }
+    return () => window.removeEventListener('chatbot:ask', onAsk);
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -131,7 +152,7 @@ export const ChatBot = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 pointer-events-auto font-sans">
+    <div className="fixed bottom-[calc(92px+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6 z-50 pointer-events-auto font-sans flex flex-col items-end">
       <AnimatePresence>
         {isOpen && !isMinimized && (
           <motion.div
@@ -139,20 +160,21 @@ export const ChatBot = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="w-[calc(100vw-32px)] max-w-[380px] sm:w-[380px] h-[520px] max-h-[82vh] bg-white rounded-2xl sm:rounded-3xl shadow-[0_12px_45px_rgba(22,119,255,0.2)] border border-[#1677FF]/15 flex flex-col overflow-hidden"
+            data-lenis-prevent
+            className="w-[calc(100vw-24px)] max-w-[420px] md:w-[380px] h-[min(580px,calc(100dvh-190px))] min-h-[320px] md:h-[520px] md:max-h-[82vh] bg-white rounded-2xl sm:rounded-3xl shadow-[0_12px_45px_rgba(12,143,116,0.2)] border border-[#0e7c66]/15 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-[#1677FF] px-4 py-3 flex items-center justify-between text-white shrink-0 shadow-xs">
+            <div className="bg-[#0e7c66] px-4 py-3 flex items-center justify-between text-white shrink-0 shadow-xs">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
-                  <Bot size={18} className="text-[#1677FF]" />
+                  <Bot size={18} className="text-[#0e7c66]" />
                 </div>
                 <div>
                   <div className="text-xs sm:text-sm font-bold tracking-tight leading-tight text-white">
                     AI Assistant
                   </div>
                   <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-white/95 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#16B98A] shadow-[0_0_6px_#16B98A]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#16b98a] shadow-[0_0_6px_#16b98a]" />
                     <span>Online</span>
                   </div>
                 </div>
@@ -187,7 +209,7 @@ export const ChatBot = () => {
             </div>
 
             {/* Messages Feed */}
-            <div className="flex-1 p-3.5 sm:p-4 overflow-y-auto space-y-3.5 bg-gradient-to-b from-[#F9FBFF] to-white scroll-smooth text-xs sm:text-[13px]">
+            <div data-lenis-prevent tabIndex={0} aria-label="Conversation" className="flex-1 min-h-0 p-3.5 sm:p-4 overflow-y-auto overscroll-contain space-y-3.5 bg-gradient-to-b from-[#fbf9f4] to-white scroll-smooth text-[13px]">
               {messages.map((msg) => {
                 const isBot = msg.role === 'assistant';
                 return (
@@ -198,8 +220,8 @@ export const ChatBot = () => {
                     <div
                       className={`max-w-[85%] rounded-2xl p-3 sm:p-3.5 leading-relaxed shadow-2xs ${
                         isBot
-                          ? 'bg-[#F0F5FF] text-[#102A56] rounded-tl-xs border border-[#1677FF]/10'
-                          : 'bg-[#1677FF] text-white rounded-tr-xs'
+                          ? 'bg-[#faf8f5] text-[#14231e] rounded-tl-xs border border-[#0e7c66]/10'
+                          : 'bg-[#0e7c66] text-white rounded-tr-xs'
                       }`}
                     >
                       <div className="whitespace-pre-line break-words font-medium">
@@ -216,11 +238,11 @@ export const ChatBot = () => {
               {/* Typing indicator */}
               {isLoading && (
                 <div className="flex flex-col items-start">
-                  <div className="bg-[#F0F5FF] rounded-2xl rounded-tl-xs p-3 border border-[#1677FF]/10 shadow-2xs">
+                  <div className="bg-[#faf8f5] rounded-2xl rounded-tl-xs p-3 border border-[#0e7c66]/10 shadow-2xs">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 bg-[#1677FF] rounded-full animate-bounce [animation-delay:-0.3s]" />
-                      <span className="w-1.5 h-1.5 bg-[#1677FF] rounded-full animate-bounce [animation-delay:-0.15s]" />
-                      <span className="w-1.5 h-1.5 bg-[#1677FF] rounded-full animate-bounce" />
+                      <span className="w-1.5 h-1.5 bg-[#0e7c66] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-1.5 h-1.5 bg-[#0e7c66] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-1.5 h-1.5 bg-[#0e7c66] rounded-full animate-bounce" />
                     </div>
                   </div>
                   <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
@@ -236,7 +258,7 @@ export const ChatBot = () => {
                     <button
                       key={chip}
                       onClick={() => handleSendMessage(chip)}
-                      className="text-[11px] sm:text-[11.5px] text-[#1677FF] bg-white border border-[#1677FF]/30 hover:border-[#1677FF] hover:bg-[#1677FF]/5 px-2.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer shadow-2xs active:scale-95 text-center font-medium truncate"
+                      className="text-[11px] sm:text-[11.5px] text-[#0e7c66] bg-white border border-[#0e7c66]/30 hover:border-[#0e7c66] hover:bg-[#0e7c66]/5 px-2.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer shadow-2xs active:scale-95 text-center font-medium truncate"
                     >
                       {chip}
                     </button>
@@ -248,9 +270,9 @@ export const ChatBot = () => {
             </div>
 
             {/* Input Footer */}
-            <div className="p-3 border-t border-gray-100 bg-white shrink-0">
-              <div className="flex items-center gap-2 bg-[#F8FAFC] border border-gray-200 rounded-full px-3 py-1.5 focus-within:border-[#1677FF] focus-within:ring-2 focus-within:ring-[#1677FF]/15 transition-all">
-                <Sparkles size={16} className="text-[#1677FF] shrink-0" />
+            <div className="p-3 pb-[max(12px,env(safe-area-inset-bottom))] md:pb-3 border-t border-gray-100 bg-white shrink-0">
+              <div className="flex items-center gap-2 bg-[#fbfaf9] border border-gray-200 rounded-full px-3 py-1.5 focus-within:border-[#0e7c66] focus-within:ring-2 focus-within:ring-[#0e7c66]/15 transition-all">
+                <Sparkles size={16} className="text-[#0e7c66] shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -259,13 +281,13 @@ export const ChatBot = () => {
                   onKeyDown={handleKeyDown}
                   placeholder="Type a message..."
                   disabled={isLoading}
-                  className="flex-1 bg-transparent border-none outline-none text-xs sm:text-[13px] text-[#102A56] placeholder:text-gray-400 font-medium"
+                  className="flex-1 bg-transparent border-none outline-none text-base md:text-[13px] text-[#14231e] placeholder:text-gray-400 font-medium"
                 />
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={!input.trim() || isLoading}
                   aria-label="Send message"
-                  className="w-7 h-7 rounded-full bg-[#1677FF] text-white flex items-center justify-center hover:bg-[#102A56] active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0 shadow-2xs"
+                  className="w-7 h-7 rounded-full bg-[#0e7c66] text-white flex items-center justify-center hover:bg-[#14231e] active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shrink-0 shadow-2xs"
                 >
                   <ArrowRight size={14} strokeWidth={2.5} />
                 </button>
@@ -289,20 +311,19 @@ export const ChatBot = () => {
               setIsOpen(true);
               setIsMinimized(false);
             }}
-            className="group relative cursor-pointer p-0 border-0 bg-transparent rounded-full shadow-[0_8px_28px_rgba(22,119,255,0.22),0_2px_8px_rgba(22,119,255,0.12)] hover:shadow-[0_12px_38px_rgba(22,119,255,0.36)] transition-all duration-300 flex items-center justify-center outline-none select-none"
-            style={{ width: 78, height: 78 }}
+            className="group relative cursor-pointer p-0 border-0 bg-transparent rounded-full shadow-[0_8px_28px_rgba(12,143,116,0.22),0_2px_8px_rgba(12,143,116,0.12)] hover:shadow-[0_12px_38px_rgba(12,143,116,0.36)] transition-all duration-300 flex items-center justify-center outline-none select-none w-[60px] h-[60px] md:w-[78px] md:h-[78px] focus-visible:ring-2 focus-visible:ring-[#0e7c66] focus-visible:ring-offset-2"
             aria-label="Open AI Assistant"
           >
             {/* Ambient soft blue aura */}
-            <span className="absolute -inset-1.5 rounded-full bg-[#1677FF]/15 blur-lg group-hover:bg-[#1677FF]/30 transition-all duration-500 pointer-events-none" />
+            <span className="absolute -inset-1.5 rounded-full bg-[#0e7c66]/15 blur-lg group-hover:bg-[#0e7c66]/30 transition-all duration-500 pointer-events-none" />
 
             {/* Pure 3D MarbleSprite - crystal clear glass sphere with transparent background */}
-            <div className="relative w-full h-full rounded-full overflow-hidden bg-transparent flex items-center justify-center pointer-events-none ring-1 ring-[#1677FF]/15">
+            <div className="relative w-full h-full rounded-full overflow-hidden bg-transparent flex items-center justify-center pointer-events-none ring-1 ring-[#0e7c66]/15">
               <MarbleSprite
                 follow="page"
                 scale={140}
-                background="#F8FBFF"
-                spriteColor="#1400F6"
+                background="#f8f6f1"
+                spriteColor="#0b826a"
                 frost={5}
                 reach={10}
                 lean={10}

@@ -56,6 +56,19 @@ npm run dev
 
 ---
 
+## ❤️ Shared like counter
+
+The Like button remembers each visitor's like on their own device. To show a total shared by everyone, the site uses a tiny serverless route ([api/likes.ts](api/likes.ts)) backed by Redis:
+
+1. In the [Vercel dashboard](https://vercel.com/dashboard), open the project → **Storage** → add an **Upstash Redis** database (the free plan is plenty) and connect it to the project. Vercel adds the connection variables for you.
+2. Redeploy. The like total appears next to the heart.
+
+How it works: each browser gets a random anonymous id, and the count is the size of a Redis set of those ids, so one browser counts once and un-liking removes the like. No IP addresses or personal data are stored. Until Redis is connected the button still works and simply shows no total.
+
+Locally, `npm run dev` serves `/api/likes` from memory (it resets on restart). Use `vercel dev` to test against real Redis. Run the tests with `npm test`.
+
+---
+
 ## 📦 Build for Production
 
 ```bash

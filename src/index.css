@@ -1,32 +1,103 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Palette: paper, forest & coral
+   paper #f8f6f1 page      sand #f1eee6 sections      line #e3dfd5 borders
+   ink   #14231e text      teal #0e7c66 accent        coral #e8743b highlight
+   (small coral text uses --coral-text #b9481a for AA contrast)
+   --------------------------------------------------------------------------- */
 @theme {
-  --color-background: #F8FBFF;
-  --color-primary-blue: #1677FF;
-  --color-bright-blue: #2F8CFF;
-  --color-soft-blue: #65B8FF;
-  --color-deep-navy: #10254D;
-  --color-secondary-text: #58708F;
-  --color-success-green: #16B98A;
+  --color-background: #f8f6f1;
+  --color-primary-blue: #0e7c66;
+  --color-bright-blue: #13987d;
+  --color-soft-blue: #4fc4a6;
+  --color-deep-navy: #14231e;
+  --color-secondary-text: #5f6e66;
+  --color-success-green: #16b98a;
+}
+
+:root {
+  --paper: #f8f6f1;
+  --sand: #f1eee6;
+  --line: #e3dfd5;
+  --ink: #14231e;
+  --ink-soft: #1e3630;
+  --muted: #5f6e66;
+  --accent: #0e7c66;
+  --accent-bright: #13987d;
+  --accent-tint: #e1f1ec;
+  --coral: #e8743b;
+  --coral-text: #b9481a; /* AA contrast on white for small text */
+  --coral-tint: #fbe9df;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
 }
 
 @layer base {
-  html, body {
-    background-color: var(--color-background);
-    color: var(--color-deep-navy);
-    font-family: "Inter", sans-serif;
+  html {
+    background-color: var(--paper);
+    overflow-x: clip;
+  }
+  body {
+    background:
+      radial-gradient(ellipse 70% 45% at 88% -8%, #dcefe8aa, transparent 70%),
+      radial-gradient(ellipse 55% 40% at 0% 40%, #efeadc99, transparent 70%),
+      var(--paper);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100vw;
     width: 100%;
     position: relative;
     touch-action: pan-y;
   }
+  ::selection { background: var(--accent); color: #fff; }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/55 backdrop-blur-xl border border-white/80 shadow-[0_8px_32px_rgba(22,119,255,0.08)];
+    @apply bg-white/55 backdrop-blur-xl border border-white/80 shadow-[0_8px_32px_rgba(12,143,116,0.08)];
   }
+}
+
+/* Lenis recommended resets */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* Scroll progress */
+.scroll-progress {
+  position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 100; pointer-events: none;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright) 55%, var(--coral));
+  transform-origin: 0 50%; transform: scaleX(0); will-change: transform;
+}
+
+/* Hero backdrop (replaces the old WebGL planets) */
+.hero-backdrop {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 38%, #e1f1ecaa 0, transparent 38%),
+    radial-gradient(circle at 12% 70%, #efe6d288 0, transparent 32%),
+    radial-gradient(circle at 90% 22%, #e1f1ec88 0, transparent 34%);
+}
+.hero-backdrop::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 72px 72px;
+  opacity: .45;
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 45%, #000 0, transparent 75%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 45%, #000 0, transparent 75%);
+}
+
+/* Scroll reveals (classes are added from JS, so no-JS visitors see everything) */
+.reveal {
+  opacity: 0; transform: translate3d(0, 28px, 0);
+  transition: opacity .8s var(--ease-out) var(--reveal-delay, 0ms), transform .8s var(--ease-out) var(--reveal-delay, 0ms);
+}
+.reveal.is-revealed { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
 }

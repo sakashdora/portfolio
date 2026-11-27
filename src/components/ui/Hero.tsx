@@ -1,27 +1,27 @@
-import { BarChart3, Brain, Download, ArrowRight, Code } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { BarChart3, Brain, Check, Command, Copy, Download, ArrowRight, Code } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Canvas } from '@react-three/fiber';
-import { OrbitalSystem } from './OrbitalSystem';
 import { TerminalModal } from './TerminalModal';
+import { scrollToId } from '../../lib/animations';
+import { profile } from '../../data/profile';
+import { RotatingPhrase } from './RotatingPhrase';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const HeroOrbit = lazy(() => import('./HeroOrbit'));
+
 export const Hero = () => {
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
-  const [typedName, setTypedName] = useState('');
+  const [copied, setCopied] = useState(false);
+  const isMac = typeof navigator !== 'undefined' && /mac|iphone|ipad/i.test(navigator.platform);
   const [activeTech, setActiveTech] = useState<string | null>(null);
-  const fullName = "S Akash Dora";
 
-  const [orbitConfig, setOrbitConfig] = useState({
-    speed: 1.1,
-    scale: 0.7,
-    particles: 850,
-    overlap: true,
-    offsetX: 0,
-    offsetY: 0.9
-  });
+  const [orbitConfig, setOrbitConfig] = useState({ speed: 1.1, scale: 0.7, particles: 850, offsetX: 0, offsetY: 0.9 });
+
+  // WebGL orbit rings are a desktop-class extra: skipped on phones, data saver and reduced motion.
+  const [use3d, setUse3d] = useState(false);
+  const [heroVisible, setHeroVisible] = useState(true);
 
   const heroSectionRef = useRef<HTMLElement>(null);
   const leftCardRef = useRef<HTMLDivElement>(null);
@@ -31,49 +31,50 @@ export const Hero = () => {
   const scrollIndicatorRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const updateOrbitPosition = () => {
-      if (!portraitRef.current || !heroSectionRef.current) return;
-      const portraitRect = portraitRef.current.getBoundingClientRect();
-      const heroRect = heroSectionRef.current.getBoundingClientRect();
-      
-      const portraitCenterY = (portraitRect.top + portraitRect.height / 2) - heroRect.top;
-      const heroHeight = heroRect.height || window.innerHeight;
-      if (heroHeight <= 0) return;
-      
-      const r = portraitCenterY / heroHeight;
-      // Camera position z=8, fov=45: visibleHeight = 2 * 8 * tan(22.5 deg) = ~6.6274
-      const visibleHeight = 16 * Math.tan((45 * Math.PI) / 360);
-      const calculatedOffsetY = (0.5 - r) * visibleHeight;
-      
-      setOrbitConfig(prev => {
-        if (Math.abs(prev.offsetY - calculatedOffsetY) > 0.02) {
-          return { ...prev, offsetY: Number(calculatedOffsetY.toFixed(3)) };
-        }
-        return prev;
-      });
-    };
-
-    updateOrbitPosition();
-    const timer = setTimeout(updateOrbitPosition, 100);
-    window.addEventListener('resize', updateOrbitPosition);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updateOrbitPosition);
-    };
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
+    const capable = window.matchMedia('(min-width: 768px) and (prefers-reduced-motion: no-preference)').matches && !nav.connection?.saveData;
+    if (!capable) return;
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+    const timer = idle ? idle(() => setUse3d(true)) : window.setTimeout(() => setUse3d(true), 400);
+    return () => { if (!idle) window.clearTimeout(timer); };
   }, []);
 
-  
+  // Stop rendering WebGL while the hero is scrolled out of view.
   useEffect(() => {
-    // Typewriter effect for main title
-    let i = 0;
-    const intervalId = setInterval(() => {
-      setTypedName(fullName.slice(0, i + 1));
-      i++;
-      if (i >= fullName.length) {
-        clearInterval(intervalId);
-      }
-    }, 150);
+    const el = heroSectionRef.current;
+    if (!el || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver(([entry]) => setHeroVisible(entry.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
+  // Keep the orbit rings centred on the portrait at any screen size.
+  useEffect(() => {
+    const update = () => {
+      if (!portraitRef.current || !heroSectionRef.current) return;
+      const p = portraitRef.current.getBoundingClientRect();
+      const h = heroSectionRef.current.getBoundingClientRect();
+      const heroHeight = h.height || window.innerHeight;
+      if (heroHeight <= 0) return;
+      const r = (p.top + p.height / 2 - h.top) / heroHeight;
+      const visibleHeight = 16 * Math.tan((45 * Math.PI) / 360);
+      const offsetY = Number(((0.5 - r) * visibleHeight).toFixed(3));
+      setOrbitConfig(prev => (Math.abs(prev.offsetY - offsetY) > 0.02 ? { ...prev, offsetY } : prev));
+    };
+    update();
+    const timer = setTimeout(update, 150);
+    window.addEventListener('resize', update);
+    return () => { clearTimeout(timer); window.removeEventListener('resize', update); };
+  }, []);
+
+  // The code card (and the quick menu) can open the terminal.
+  useEffect(() => {
+    const open = () => setIsTerminalOpen(true);
+    window.addEventListener('open-terminal', open);
+    return () => window.removeEventListener('open-terminal', open);
+  }, []);
+
+  useEffect(() => {
     const ctx = gsap.context(() => {
       // Initial Stagger Animation
       if (contentRef.current) {
@@ -136,18 +137,27 @@ export const Hero = () => {
     });
 
     return () => {
-      clearInterval(intervalId);
       ctx.revert();
     };
   }, []);
 
+  async function copyEmail() {
+    try {
+      await navigator.clipboard.writeText(profile.email);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.location.href = `mailto:${profile.email}`;
+    }
+  }
+
   const techs = [
-    { name: 'React', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/react/react-original.svg', desc: 'Component UI' },
-    { name: 'Node.js', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/nodejs/nodejs-original.svg', desc: 'JS Runtime' },
-    { name: 'PostgreSQL', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postgresql/postgresql-original.svg', desc: 'Relational DB' },
-    { name: 'Python', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg', desc: 'Data & Backend' },
-    { name: 'Git', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/git/git-original.svg', desc: 'Version Control' },
-    { name: 'AWS', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/amazonwebservices/amazonwebservices-original-wordmark.svg', desc: 'Cloud Platform' }
+    { name: 'React', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/react/react-original.svg', desc: 'Component UI' },
+    { name: 'Node.js', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/nodejs/nodejs-original.svg', desc: 'JS Runtime' },
+    { name: 'PostgreSQL', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/postgresql/postgresql-original.svg', desc: 'Relational DB' },
+    { name: 'Python', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/python/python-original.svg', desc: 'Data & Backend' },
+    { name: 'Git', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/git/git-original.svg', desc: 'Version Control' },
+    { name: 'AWS', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/amazonwebservices/amazonwebservices-original-wordmark.svg', desc: 'Cloud Platform' }
   ];
 
   return (
@@ -191,16 +201,15 @@ export const Hero = () => {
     `}</style>
     <section ref={heroSectionRef} id="home" className="relative min-h-[100svh] w-full max-w-full overflow-hidden flex flex-col pt-24 sm:pt-28 md:pt-32 pb-4 sm:pb-6">
       
-      {/* 3D WebGL Background - Fixed to background to prevent UI overlap */}
-      <div className="absolute inset-0 pointer-events-auto z-0 transition-all duration-700">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-          <OrbitalSystem config={orbitConfig} />
-        </Canvas>
+      {/* Soft static backdrop: no WebGL, so scrolling stays smooth */}
+      <div className="hero-backdrop" aria-hidden="true" />
+      <div className="hero-orbit-layer absolute inset-0 z-0 pointer-events-auto" aria-hidden="true">
+        {use3d && <Suspense fallback={null}><HeroOrbit config={orbitConfig} active={heroVisible} /></Suspense>}
       </div>
       
       {/* Atmospheric Background Glows (Non-3D) */}
-      <div className="absolute top-1/3 left-1/4 w-[30vw] h-[30vw] bg-[#1677FF]/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
-      <div className="absolute top-1/2 right-1/4 w-[25vw] h-[25vw] bg-[#6ED7FF]/15 rounded-full blur-[100px] -z-10 pointer-events-none" />
+      <div className="absolute top-1/3 left-1/4 w-[30vw] h-[30vw] bg-[#0e7c66]/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
+      <div className="absolute top-1/2 right-1/4 w-[25vw] h-[25vw] bg-[#e8743b]/15 rounded-full blur-[100px] -z-10 pointer-events-none" />
       
       {/* Main Content Container */}
       <div className="relative z-10 w-full max-w-[1440px] mx-auto px-4 md:px-8 flex-1 flex flex-col items-center justify-between pointer-events-none">
@@ -212,20 +221,26 @@ export const Hero = () => {
             
             {/* Portrait Image */}
             <div ref={portraitRef} className="relative w-[clamp(130px,18vh,210px)] aspect-square z-20 pointer-events-auto animate-gentle-float">
+              {/* CSS rings stand in for the WebGL orbit on phones / reduced motion */}
+              <span className="hero-rings" aria-hidden="true"><i /><i /><i /></span>
               {/* Soft backdrop glow strictly behind the image */}
-              <div className="absolute inset-0 bg-[#1677FF]/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute inset-0 bg-[#0e7c66]/20 rounded-full blur-2xl pointer-events-none" />
               
               <img 
-                src="/assets/profile_pic.png" 
-                alt="S Akash Dora" 
+                src="/assets/profile_pic.webp"
+                alt="S Akash Dora"
+                width={420}
+                height={420}
+                fetchPriority="high"
+                decoding="async"
                 draggable={false}
-                className="w-full h-full object-cover rounded-full shadow-[0_0_40px_rgba(22,119,255,0.2)] ring-1 ring-white/30 select-none pointer-events-none"
+                className="w-full h-full object-cover rounded-full shadow-[0_0_40px_rgba(12,143,116,0.2)] ring-1 ring-white/30 select-none pointer-events-none"
               />
               
               {/* Availability Badge */}
-              <div className="absolute -bottom-2.5 sm:-bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#E6F8F3] border border-[#16B98A]/15 z-30 whitespace-nowrap shadow-xs">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#16B98A]" />
-                <span className="text-[9px] sm:text-[10px] font-bold text-[#16B98A]">Available for Roles</span>
+              <div className="absolute -bottom-2.5 sm:-bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#e6f8f3] border border-[#16b98a]/15 z-30 whitespace-nowrap shadow-xs">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#16b98a]" />
+                <span className="text-[11px] sm:text-xs font-bold text-[#0f8f6b]">Available for Roles</span>
               </div>
             </div>
 
@@ -233,22 +248,22 @@ export const Hero = () => {
             <div 
               ref={leftCardRef} 
               onClick={() => setIsTerminalOpen(true)}
-              className="hidden lg:block absolute left-4 xl:-left-12 top-[10%] bg-white/80 backdrop-blur-md p-4 rounded-2xl w-[clamp(240px,20vw,320px)] transform -rotate-3 shadow-[0_8px_30px_rgba(22,119,255,0.1)] border border-[#1677FF]/10 z-30 pointer-events-auto cursor-pointer hover:scale-105 hover:bg-white transition-all duration-300"
+              className="hidden lg:block absolute left-4 xl:-left-12 top-[10%] bg-white/80 backdrop-blur-md p-4 rounded-2xl w-[clamp(240px,20vw,320px)] transform -rotate-3 shadow-[0_8px_30px_rgba(12,143,116,0.1)] border border-[#0e7c66]/10 z-30 pointer-events-auto cursor-pointer hover:scale-105 hover:bg-white transition-all duration-300"
             >
               <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
                 <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
                 </div>
-                <Code size={14} className="text-[#1677FF]" />
+                <Code size={14} className="text-[#0e7c66]" />
               </div>
-              <pre className="text-[10px] xl:text-[11px] font-mono leading-relaxed pointer-events-none">
-                <span className="text-[#1677FF] font-semibold">const</span> <span className="text-[#102A56]">developer</span> <span className="text-[#1677FF]">=</span> {'{'}
-                {'\n'}  <span className="text-[#1677FF]">name:</span> <span className="text-[#0EA5E9]">"Akash"</span>,
-                {'\n'}  <span className="text-[#1677FF]">role:</span> <span className="text-[#0EA5E9]">"Full-Stack Engineer"</span>,
-                {'\n'}  <span className="text-[#1677FF]">passion:</span> <span className="text-[#0EA5E9]">"Building Scalable</span>
-                {'\n'}           <span className="text-[#0EA5E9]">Solutions"</span>
+              <pre className="text-[11px] xl:text-xs font-mono leading-relaxed pointer-events-none">
+                <span className="text-[#0e7c66] font-semibold">const</span> <span className="text-[#14231e]">developer</span> <span className="text-[#0e7c66]">=</span> {'{'}
+                {'\n'}  <span className="text-[#0e7c66]">name:</span> <span className="text-[#117c67]">"Akash"</span>,
+                {'\n'}  <span className="text-[#0e7c66]">role:</span> <span className="text-[#117c67]">"Full-Stack Engineer"</span>,
+                {'\n'}  <span className="text-[#0e7c66]">passion:</span> <span className="text-[#117c67]">"Building Scalable</span>
+                {'\n'}           <span className="text-[#117c67]">Solutions"</span>
                 {'\n'}{'}'};
               </pre>
             </div>
@@ -256,29 +271,29 @@ export const Hero = () => {
             {/* Right Floating Cards */}
             <div ref={rightCardRef} className="hidden lg:flex absolute right-4 xl:-right-12 top-[10%] flex-col gap-4 z-30 pointer-events-auto">
               {/* Card 1 */}
-              <div className="bg-white/90 backdrop-blur-md p-2.5 pr-4 rounded-xl flex items-center gap-3 w-[clamp(200px,18vw,260px)] shadow-[0_8px_30px_rgba(22,119,255,0.1)] border border-gray-100 transform rotate-2">
-                <div className="w-8 h-8 rounded-lg bg-[#1677FF]/10 flex items-center justify-center text-[#1677FF] shrink-0">
+              <div className="bg-white/90 backdrop-blur-md p-2.5 pr-4 rounded-xl flex items-center gap-3 w-[clamp(200px,18vw,260px)] shadow-[0_8px_30px_rgba(12,143,116,0.1)] border border-gray-100 transform rotate-2">
+                <div className="w-8 h-8 rounded-lg bg-[#0e7c66]/10 flex items-center justify-center text-[#0e7c66] shrink-0">
                   <BarChart3 size={16} strokeWidth={2.5} />
                 </div>
                 <div className="flex-1">
-                  <div className="text-[9px] text-[#536B8D] font-bold uppercase tracking-wider">Build</div>
-                  <div className="text-[11px] xl:text-xs font-bold text-[#102A56]">Scalable Products</div>
+                  <div className="text-[11px] text-[#647c70] font-bold uppercase tracking-wider">Build</div>
+                  <div className="text-xs xl:text-sm font-bold text-[#14231e]">Scalable Products</div>
                 </div>
-                <div className="text-[#102A56]/40">
+                <div className="text-[#14231e]/40">
                   <ArrowRight size={12} />
                 </div>
               </div>
               
               {/* Card 2 */}
-              <div className="bg-white/90 backdrop-blur-md p-2.5 pr-4 rounded-xl flex items-center gap-3 w-[clamp(200px,18vw,260px)] shadow-[0_8px_30px_rgba(22,119,255,0.1)] border border-gray-100 transform -rotate-1 ml-4">
-                <div className="w-8 h-8 rounded-lg bg-[#1677FF]/10 flex items-center justify-center text-[#1677FF] shrink-0">
+              <div className="bg-white/90 backdrop-blur-md p-2.5 pr-4 rounded-xl flex items-center gap-3 w-[clamp(200px,18vw,260px)] shadow-[0_8px_30px_rgba(12,143,116,0.1)] border border-gray-100 transform -rotate-1 ml-4">
+                <div className="w-8 h-8 rounded-lg bg-[#0e7c66]/10 flex items-center justify-center text-[#0e7c66] shrink-0">
                   <Brain size={16} strokeWidth={2.5} />
                 </div>
                 <div className="flex-1">
-                  <div className="text-[9px] text-[#536B8D] font-bold uppercase tracking-wider">Apply</div>
-                  <div className="text-[11px] xl:text-xs font-bold text-[#102A56]">AI for Real World</div>
+                  <div className="text-[11px] text-[#647c70] font-bold uppercase tracking-wider">Apply</div>
+                  <div className="text-xs xl:text-sm font-bold text-[#14231e]">AI for Real World</div>
                 </div>
-                <div className="text-[#102A56]/40">
+                <div className="text-[#14231e]/40">
                   <ArrowRight size={12} />
                 </div>
               </div>
@@ -289,46 +304,44 @@ export const Hero = () => {
           {/* Text Content */}
           <div ref={contentRef} className="text-center shrink-0 mb-3 sm:mb-4 pointer-events-auto relative w-full px-2">
             
-            <h1 className="text-[clamp(28px,7.5vw,56px)] leading-[1.1] font-black text-[#102A56] mb-1.5 tracking-tight drop-shadow-sm min-h-[1.2em]">
-              {typedName.length <= 2 ? (
-                <>{typedName}</>
-              ) : (
-                <>
-                  {typedName.slice(0, 2)}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1677FF] to-[#6ED7FF]">
-                    {typedName.slice(2, 7)}
-                  </span>
-                  {typedName.slice(7)}
-                </>
-              )}
+            <h1 className="hero-name">
+              <span>S</span> <em>Akash</em> <span>Dora</span>
             </h1>
-            <h2 className="text-[clamp(15px,4vw,22px)] font-bold text-[#102A56] mb-2 tracking-wide">
-              Full-Stack Software Engineer
-            </h2>
-            <p className="text-[#536B8D] text-[clamp(12px,3.5vw,15px)] max-w-[540px] mx-auto mb-5 font-medium leading-relaxed px-2">
-              I build scalable full-stack applications, AI-powered products,
-              and reliable backend systems.
-            </p>
+            <h2 className="hero-role">Full-Stack Software Engineer</h2>
+            <RotatingPhrase />
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-5 w-full max-w-xs sm:max-w-none mx-auto">
               <button 
-                onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
-                className="bg-[#1677FF] text-white px-6 py-3 sm:py-2.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#102A56] hover:shadow-[0_8px_24px_rgba(22,119,255,0.3)] hover:-translate-y-0.5 active:scale-[0.98] transition-all w-full sm:w-[170px] cursor-pointer"
+                onClick={() => scrollToId('projects')}
+                className="bg-[#0e7c66] text-white px-6 py-3 sm:py-2.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#14231e] hover:shadow-[0_8px_24px_rgba(12,143,116,0.3)] hover:-translate-y-0.5 active:scale-[0.98] transition-all w-full sm:w-auto sm:min-w-[170px] whitespace-nowrap cursor-pointer"
               >
                 View Projects <ArrowRight size={14} strokeWidth={2.5} />
               </button>
               <a 
                 href="/S_Akash_Dora_Resume.pdf"
                 download="S_Akash_Dora_Resume.pdf"
-                className="bg-transparent border border-[#102A56]/20 text-[#102A56] px-6 py-3 sm:py-2.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-white/60 hover:border-[#1677FF]/40 hover:text-[#1677FF] hover:-translate-y-0.5 active:scale-[0.98] transition-all w-full sm:w-[170px] cursor-pointer"
+                className="bg-transparent border border-[#14231e]/20 text-[#14231e] px-6 py-3 sm:py-2.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-white/60 hover:border-[#0e7c66]/40 hover:text-[#0e7c66] hover:-translate-y-0.5 active:scale-[0.98] transition-all w-full sm:w-auto sm:min-w-[170px] whitespace-nowrap cursor-pointer"
               >
                 <Download size={14} strokeWidth={2.5} /> Download Resume
               </a>
             </div>
 
+            {/* Quick actions */}
+            <div className="hero-quick">
+              <button type="button" className="hero-chip" onClick={copyEmail} aria-live="polite">
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copied ? 'Email copied' : profile.email}</span>
+              </button>
+              <button type="button" className="hero-chip" onClick={() => window.dispatchEvent(new Event('palette:open'))}>
+                <Command size={14} />
+                <span>Quick menu</span>
+                <kbd>{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+              </button>
+            </div>
+
             {/* Tech Stack Strip (Liquid Marquee) */}
-            <div className="marquee-container overflow-hidden w-[calc(100vw-32px)] max-w-[650px] bg-white/75 backdrop-blur-xl border border-white rounded-full shadow-[0_4px_24px_rgba(16,37,77,0.06)] mx-auto relative cursor-pointer group">
+            <div className="marquee-container overflow-hidden w-[calc(100vw-32px)] max-w-[650px] bg-white/75 backdrop-blur-xl border border-white rounded-full shadow-[0_4px_24px_rgba(25,49,43,0.06)] mx-auto relative cursor-pointer group">
               {/* Fading edges for smooth entry/exit */}
               <div className="absolute left-0 top-0 bottom-0 w-6 sm:w-16 bg-gradient-to-r from-white to-transparent z-10 rounded-l-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
               <div className="absolute right-0 top-0 bottom-0 w-6 sm:w-16 bg-gradient-to-l from-white to-transparent z-10 rounded-r-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -339,13 +352,13 @@ export const Hero = () => {
                     {techs.map((tech) => (
                       <div 
                         key={`${i}-${tech.name}`} 
-                        className="flex items-center gap-1.5 text-[11px] sm:text-sm font-bold text-[#536B8D] hover:text-[#1677FF] transition-all duration-300 whitespace-nowrap cursor-pointer px-1.5 sm:px-2"
+                        className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#647c70] hover:text-[#0e7c66] transition-all duration-300 whitespace-nowrap cursor-pointer px-1.5 sm:px-2"
                         onClick={() => setActiveTech(activeTech === tech.name ? null : tech.name)}
                       >
                         <img src={tech.icon} alt={tech.name} className="w-3.5 h-3.5 sm:w-5 sm:h-5 object-contain" />
                         <span>{tech.name}</span>
                         <div className={`overflow-hidden transition-all duration-300 flex items-center ${activeTech === tech.name ? 'max-w-[150px] opacity-100 ml-1' : 'max-w-0 opacity-0 ml-0'}`}>
-                          <span className="text-[9px] sm:text-xs font-semibold text-white bg-[#1677FF] px-2 py-0.5 rounded-full whitespace-nowrap">
+                          <span className="text-[10px] sm:text-xs font-semibold text-white bg-[#0e7c66] px-2 py-0.5 rounded-full whitespace-nowrap">
                             {tech.desc}
                           </span>
                         </div>
@@ -361,22 +374,22 @@ export const Hero = () => {
         {/* Animated Scroll Down Indicator */}
         <button 
           ref={scrollIndicatorRef}
-          onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+          onClick={() => scrollToId('about')}
           className="group flex flex-col items-center gap-1.5 sm:gap-2 opacity-60 hover:opacity-100 transition-all duration-300 shrink-0 pointer-events-auto cursor-pointer pb-2 hover:-translate-y-0.5 mt-2"
           aria-label="Scroll down to About section"
         >
           {/* Animated Mouse Capsule with Rolling Wheel */}
-          <div className="w-4.5 h-7 sm:w-5 sm:h-8 rounded-full border-2 border-[#102A56]/40 group-hover:border-[#1677FF] flex justify-center p-0.5 sm:p-1 transition-colors bg-white/40 backdrop-blur-xs">
-            <div className="w-1 h-1.5 sm:h-2 rounded-full bg-[#1677FF] animate-wheel-scroll shadow-[0_0_8px_rgba(22,119,255,0.7)]" />
+          <div className="w-4.5 h-7 sm:w-5 sm:h-8 rounded-full border-2 border-[#14231e]/40 group-hover:border-[#0e7c66] flex justify-center p-0.5 sm:p-1 transition-colors bg-white/40 backdrop-blur-xs">
+            <div className="w-1 h-1.5 sm:h-2 rounded-full bg-[#0e7c66] animate-wheel-scroll shadow-[0_0_8px_rgba(12,143,116,0.7)]" />
           </div>
 
-          <span className="text-[8px] sm:text-[9px] font-bold tracking-[0.25em] text-[#102A56] group-hover:text-[#1677FF] transition-colors">
+          <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.25em] text-[#14231e] group-hover:text-[#0e7c66] transition-colors">
             SCROLL
           </span>
 
           {/* Flowing Gradient Track */}
-          <div className="relative w-[1.5px] h-5 sm:h-6 bg-[#102A56]/15 group-hover:bg-[#1677FF]/30 rounded-full overflow-hidden transition-colors">
-            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-transparent via-[#1677FF] to-transparent animate-track-drop" />
+          <div className="relative w-[1.5px] h-5 sm:h-6 bg-[#14231e]/15 group-hover:bg-[#0e7c66]/30 rounded-full overflow-hidden transition-colors">
+            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-transparent via-[#0e7c66] to-transparent animate-track-drop" />
           </div>
         </button>
       </div>

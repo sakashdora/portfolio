@@ -22,20 +22,20 @@ const icons: Record<string, React.ReactNode> = {
 
 export const SocialSidebar = () => {
   return (
-    <div className="hidden md:flex fixed left-6 top-[55%] -translate-y-1/2 flex-col items-center gap-6 z-40">
+    <div className="hidden xl:flex fixed left-6 top-[55%] -translate-y-1/2 flex-col items-center gap-6 z-40">
       {social.map((item) => (
         <a
           key={item.name}
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#102A56] hover:text-[#1677FF] hover:-translate-y-1 transition-all duration-300 opacity-60 hover:opacity-100"
+          className="text-[#14231e] hover:text-[#0e7c66] hover:-translate-y-1 transition-all duration-300 opacity-60 hover:opacity-100"
           aria-label={item.name}
         >
           {icons[item.icon]}
         </a>
       ))}
-      <div className="w-[1px] h-24 bg-gradient-to-b from-[#102A56]/20 to-transparent mt-2" />
+      <div className="w-[1px] h-24 bg-gradient-to-b from-[#14231e]/20 to-transparent mt-2" />
     </div>
   );
 };

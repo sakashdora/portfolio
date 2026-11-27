@@ -72,14 +72,14 @@ export const TerminalModal = ({ isOpen, onClose }: TerminalModalProps) => {
       />
       
       {/* Terminal Window */}
-      <div className="relative w-full max-w-2xl bg-[#0C0C0C] rounded-lg shadow-2xl border border-white/10 overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-2xl bg-[#0c0c0c] rounded-lg shadow-2xl border border-white/10 overflow-hidden animate-in zoom-in-95 duration-300">
         
         {/* Title Bar */}
-        <div className="flex items-center justify-between px-4 py-2 bg-[#1A1A1A] border-b border-white/5 select-none">
+        <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a1a] border-b border-white/5 select-none">
           <div className="flex items-center gap-2">
-             <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-             <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-             <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
+             <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+             <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+             <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
              <span className="ml-2 text-xs text-gray-400 font-medium font-sans">Command Prompt - profile.js</span>
           </div>
           <button 
@@ -118,7 +118,7 @@ export const TerminalModal = ({ isOpen, onClose }: TerminalModalProps) => {
                   line.type === 'cmd' ? "text-white" : "",
                   line.type === 'system' ? "text-yellow-300" : "",
                   line.type === 'success' ? "text-green-400" : "",
-                  line.type === 'code' ? "text-[#569CD6]" : "",
+                  line.type === 'code' ? "text-[#29816f]" : "",
                   line.type === 'output' ? "text-gray-400" : ""
                 )}
               >
@@ -126,9 +126,9 @@ export const TerminalModal = ({ isOpen, onClose }: TerminalModalProps) => {
                   // Simple syntax highlighting for the final output
                   <span dangerouslySetInnerHTML={{ 
                     __html: line.text
-                      .replace(/const/g, '<span class="text-[#C586C0]">const</span>')
-                      .replace(/developer/g, '<span class="text-[#4FC1FF]">developer</span>')
-                      .replace(/"([^"]+)"/g, '<span class="text-[#CE9178]">"$1"</span>')
+                      .replace(/const/g, '<span class="text-[#c586c0]">const</span>')
+                      .replace(/developer/g, '<span class="text-[#0eb291]">developer</span>')
+                      .replace(/"([^"]+)"/g, '<span class="text-[#ce9178]">"$1"</span>')
                   }} />
                 ) : (
                   line.text

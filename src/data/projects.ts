@@ -7,7 +7,7 @@ export const projects = [
     tech: ["Python", "TensorFlow", "React", "Node.js", "Tailwind CSS"],
     demoUrl: "#",
     githubUrl: "#",
-    image: "/assets/project_disease_prediction.png"
+    image: "/assets/project_disease_prediction.webp"
   },
   {
     id: "proj-2",
@@ -17,7 +17,7 @@ export const projects = [
     tech: ["Next.js", "TypeScript", "Stripe", "PostgreSQL", "Prisma"],
     demoUrl: "#",
     githubUrl: "#",
-    image: "/assets/project_ecommerce.jpg"
+    image: "/assets/project_ecommerce.webp"
   },
   {
     id: "proj-3",
@@ -27,7 +27,7 @@ export const projects = [
     tech: ["React", "Firebase", "Google Maps API", "Framer Motion"],
     demoUrl: "#",
     githubUrl: "#",
-    image: "/assets/project_homelux.png"
+    image: "/assets/project_homelux.webp"
   },
   {
     id: "proj-4",
@@ -37,7 +37,7 @@ export const projects = [
     tech: ["React", "Redux", "WebSockets", "Node.js", "Express"],
     demoUrl: "#",
     githubUrl: "#",
-    image: "/assets/project_tradevault.jpg"
+    image: "/assets/project_tradevault.webp"
   },
   {
     id: "proj-5",
@@ -47,6 +47,6 @@ export const projects = [
     tech: ["Vue.js", "D3.js", "Python", "Elasticsearch", "Docker"],
     demoUrl: "#",
     githubUrl: "#",
-    image: "/assets/project_veil.jpg"
+    image: "/assets/project_veil.webp"
   }
 ];

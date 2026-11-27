@@ -67,12 +67,12 @@ export const OrbitalSystem = ({ config }: { config?: { speed: number, scale: num
   return (
     <group ref={groupRef} scale={[scaleMult, scaleMult, scaleMult]} position={[offsetX, offsetY, 0]}>
       <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} color="#1677FF" />
+      <pointLight position={[10, 10, 10]} intensity={1} color="#0e7c66" />
       
       <Float speed={2 * speedMult} rotationIntensity={0.1} floatIntensity={0.2}>
-        <OrbitRing radius={2.5} speed={0.4 * speedMult} rotationX={Math.PI / 3} rotationY={0} color="#1677FF" />
-        <OrbitRing radius={3.2} speed={-0.3 * speedMult} rotationX={Math.PI / 4} rotationY={Math.PI / 4} color="#6ED7FF" />
-        <OrbitRing radius={4} speed={0.2 * speedMult} rotationX={Math.PI / 2.5} rotationY={-Math.PI / 6} color="#1677FF" />
+        <OrbitRing radius={2.5} speed={0.4 * speedMult} rotationX={Math.PI / 3} rotationY={0} color="#0e7c66" />
+        <OrbitRing radius={3.2} speed={-0.3 * speedMult} rotationX={Math.PI / 4} rotationY={Math.PI / 4} color="#e8743b" />
+        <OrbitRing radius={4} speed={0.2 * speedMult} rotationX={Math.PI / 2.5} rotationY={-Math.PI / 6} color="#0e7c66" />
       </Float>
 
       {/* Floating background particles */}
@@ -81,7 +81,7 @@ export const OrbitalSystem = ({ config }: { config?: { speed: number, scale: num
       {/* Inner glow effect around the portrait */}
       <mesh position={[0, 0, -1]}>
         <circleGeometry args={[1.8, 64]} />
-        <meshBasicMaterial color="#1677FF" transparent opacity={0.05} />
+        <meshBasicMaterial color="#0e7c66" transparent opacity={0.05} />
       </mesh>
     </group>
   );
